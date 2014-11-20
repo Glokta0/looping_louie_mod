@@ -8,7 +8,7 @@
 #include <util/delay.h>
 
 #define DELAY_LOOP	1500
-#define DELAY_BREAK	500
+#define DELAY_BREAK	1000
 #define DELAY_BACKWARD	1000
 
 #define SEED	PB3
