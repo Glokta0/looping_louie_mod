@@ -57,17 +57,17 @@ main(void)
 	    (1<<ADSC);				/* start conversion */
 
 	for (;;) {
-		uint8_t poti = ADCH / 4;
+		uint8_t poti = ADCH / 2;
 		uint8_t r = rand() % 3;
 		switch (r) {
 		case 0:
-			OCR0A = 0xff;
+			OCR0A = 0x80;
 			break;
 		case 1:
-			OCR0A = 0xff - (poti / 2);
+			OCR0A = 0x80 + (poti / 2);
 			break;
 		case 2:
-			OCR0A = 0xff - poti;
+			OCR0A = 0x80 + poti;
 			break;
 		}
 
