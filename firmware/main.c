@@ -8,8 +8,9 @@
 #include <util/delay.h>
 
 #define DELAY_LOOP	1500
-#define DELAY_BREAK	1000
+#define DELAY_BREAK	500
 #define DELAY_BACKWARD	1000
+#define DELAY_STEP	200
 
 #define SEED	PB3
 #define POTI	PB4
@@ -30,6 +31,11 @@
 	PORTB &= ~(1<<DIR1);						\
 	PORTB |= (1<<DIR2);						\
 } while (0)
+
+static void set_speed(void);
+static void step_to_level(uint8_t target);
+
+static uint8_t level = 0;			/* speed level [0-2] */
 
 int
 main(void)
@@ -57,28 +63,26 @@ main(void)
 	    (1<<ADSC);				/* start conversion */
 
 	for (;;) {
-		uint8_t poti = ADCH / 2;
-		uint8_t r = rand() % 3;
-		switch (r) {
-		case 0:
-			OCR0A = 0x80;
-			break;
-		case 1:
-			OCR0A = 0x80 + (poti / 2);
-			break;
-		case 2:
-			OCR0A = 0x80 + poti;
-			break;
-		}
+		uint8_t next = rand() % 3;
+		step_to_level(next);
 
 		if((rand() % 10) == 0) {
+			uint8_t current_level = level;
+
+			step_to_level(0);
 			BREAK();
 			_delay_ms(DELAY_BREAK);
+
 			BACKWARD();
+			step_to_level(current_level);
 			_delay_ms(DELAY_BACKWARD);
+
+			step_to_level(0);
 			BREAK();
 			_delay_ms(DELAY_BREAK);
+
 			FORWARD();
+			step_to_level(current_level);
 		}
 
 		_delay_ms(DELAY_LOOP);
@@ -86,4 +90,38 @@ main(void)
 
 	/* NOTREACHED */
 	return (0);
+}
+
+static void
+step_to_level(uint8_t target)
+{
+	if (target == level)
+		return;
+
+	int8_t incr = 1;
+	if (target < level)
+		incr = -1;
+
+	for (;target != level; level+=incr) {
+		set_speed();
+		_delay_ms(DELAY_STEP);
+	}
+}
+
+static void
+set_speed()
+{
+	uint8_t poti = ADCH / 3;
+
+	switch (level) {
+	case 0:
+		OCR0A = 0xaa;
+		break;
+	case 1:
+		OCR0A = 0xaa + (poti / 2);
+		break;
+	case 2:
+		OCR0A = 0xaa + poti;
+		break;
+	}
 }
